@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мой сайт</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: white;
+            text-align: center;
+        }
+        .search-icon {
+            position: fixed;
+            top: 40px;
+            left: 40px;
+            width: 100px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 2000;
+            background-color: #0078d7;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0; top: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 30px 20px 20px 20px;
+            border-radius: 12px;
+            min-width: 320px;
+            max-width: 90vw;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            position: relative;
+            text-align: left;
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px; right: 15px;
+            font-size: 24px;
+            color: #888;
+            cursor: pointer;
+        }
+        .search-results {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .search-results li {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .search-results li:hover {
+            background-color: #f5f5f5;
+        }
+        .sidebar {
+            width: 60px;
+            background-color: #f0f0f0;
+            border-left: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+        }
+        .sidebar button {
+            margin: 5px 0;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #999;
+            background-color: white;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .sidebar button:hover, .sidebar button.active {
+            background-color: #0078d7;
+            color: white;
+            border-color: #005a9e;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 60px 80px 20px 20px;
+            max-width: calc(100% - 60px);
+            margin-right: 60px;
+            position: relative;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            width: 100%;
+        }
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+        }
+        #top-right-logo {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            display: block;
+            z-index: 10;
+        }
+        .content h1 {
+            margin-bottom: 70px;
+        }
+        .content #page-image {
+            margin-bottom: 70px;
+        }
+        .object-label {
+            position: absolute;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid #0078d7;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 14px;
+            color: #0078d7;
+            pointer-events: none;
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            left: 50%;
+            top: 50%;
+        }
+        .object-label.delete-mode {
+            cursor: pointer;
+            background: #ffcccc;
+            border-color: #d70000;
+            pointer-events: auto;
+        }
+        .image-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+        }
+        #page-image.add-object-cursor {
+            cursor: crosshair;
+        }
+        .edit-panel {
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        .edit-panel label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .edit-panel input[type="text"] {
+            width: 100%;
+            padding: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .add-object-btn {
+            margin: 10px 5px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background: #0078d7;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .add-object-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .add-object-btn.active {
+            background: #005a9e;
+        }
+        .delete-object-btn {
+            margin: 10px 5px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background: #d70000;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .delete-object-btn.active {
+            background: #a00000;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #e7f3ff;
+            border: 1px solid #0078d7;
+            text-align: center;
+            width: 100%;
+        }
+        .save-file-btn {
+            margin: 10px 5px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .save-file-btn:hover {
+            background: #218838;
+        }
+        #page-text {
+            text-align: center;
+            width: 100%;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .edit-buttons-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0078d7;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Иконка поиска в левом верхнем углу -->
+    <div class="search-icon" id="searchIcon" title="">
+        <span style="color:white; font-weight:bold; margin-left:8px; font-size:16px;">Поиск</span>
+    </div>
+
+    <!-- Модальное окно поиска -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <span class="modal-close" id="closeModal">&times;</span>
+            <h2>Поиск по объектам</h2>
+            <input type="text" id="searchInput" placeholder="Введите название объекта..." style="width:100%;padding:8px;font-size:16px;">
+            <ul class="search-results" id="searchResults"></ul>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="content" id="content">
+        <h1>Карта третьего корпуса ИжГТУ</h1>
+        <div id="loader" class="loader" style="display: none;"></div>
+        <div class="image-container" id="imageContainer">
+            <img src="images/tech.jpg" alt="Логотип сайта" id="page-image" />
+        </div>
+        <img src="images/logo.jpg" alt="Логотип правого верхнего угла" id="top-right-logo" />
+        <p id="page-text">Загрузка...</p>
+
+        <!-- Отладочная информация -->
+        <div class="debug-info" id="debugInfo" style="display: none;"></div>
+
+        <!-- Панель редактирования только для админа -->
+        <div class="edit-panel" id="editPanel" style="display:none;">
+            <div class="message" id="editMessage" style="display:none;"></div>
+            <div class="edit-buttons-container">
+                <button class="add-object-btn" id="addObjectBtn">Добавить объект на фото</button>
+                <button class="delete-object-btn" id="deleteObjectBtn">Удалить объект</button>
+                <button class="save-file-btn" id="saveFileBtn">Сохранить в data.json</button>
+                <button class="save-file-btn" id="refreshDataBtn" style="background: #6c757d;">Обновить данные</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Боковая панель с кнопками 1-9 -->
+    <div class="sidebar" id="sidebar">
+        <button class="active" data-page="1">1</button>
+        <button data-page="2">2</button>
+        <button data-page="3">3</button>
+        <button data-page="4">4</button>
+        <button data-page="5">5</button>
+        <button data-page="6">6</button>
+        <button data-page="7">7</button>
+        <button data-page="8">8</button>
+        <button data-page="9">9</button>
+    </div>
+
+    <script>
+        // --- Настройка режима администратора ---
+        const isAdmin = true;
+
+        // --- DOM элементы ---
+        const content = document.getElementById('content');
+        const contentTitle = content.querySelector('h1');
+        const pageImage = document.getElementById('page-image');
+        const pageText = document.getElementById('page-text');
+        const topRightLogo = document.getElementById('top-right-logo');
+        const buttons = document.querySelectorAll('.sidebar button');
+        const editPanel = document.getElementById('editPanel');
+        const addObjectBtn = document.getElementById('addObjectBtn');
+        const deleteObjectBtn = document.getElementById('deleteObjectBtn');
+        const saveFileBtn = document.getElementById('saveFileBtn');
+        const refreshDataBtn = document.getElementById('refreshDataBtn');
+        const searchIcon = document.getElementById('searchIcon');
+        const searchModal = document.getElementById('searchModal');
+        const closeModal = document.getElementById('closeModal');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const imageContainer = document.getElementById('imageContainer');
+        const editMessage = document.getElementById('editMessage');
+        const loader = document.getElementById('loader');
+        const debugInfo = document.getElementById('debugInfo');
+
+        // --- Константы ---
+        const DATA_FILE = './data.json';
+
+        // --- Функции для работы с файлом ---
+        function saveDataToFile() {
+            const dataStr = JSON.stringify(pagesData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('Файл data.json скачан. Загрузите его в корневую папку вашего репозитория на GitHub.');
+        }
+
+        // --- Функция загрузки данных с сервера ---
+        async function loadDataFromServer() {
+            try {
+                loader.style.display = 'block';
+                pageText.textContent = 'Загрузка данных...';
+                debugInfo.style.display = 'block';
+                
+                // Добавляем timestamp для избежания кэширования
+                const url = DATA_FILE + '?t=' + Date.now();
+                debugInfo.innerHTML = `Пытаюсь загрузить: ${url}<br>`;
+                
+                const response = await fetch(url);
+                
+                debugInfo.innerHTML += `Статус ответа: ${response.status}<br>`;
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                debugInfo.innerHTML += `Получено данных: ${text.length} символов<br>`;
+                
+                if (!text.trim()) {
+                    throw new Error('Файл пустой');
+                }
+                
+                const serverData = JSON.parse(text);
+                debugInfo.innerHTML += `Данные успешно распаршены<br>`;
+                
+                // Валидация данных
+                if (typeof serverData !== 'object' || serverData === null) {
+                    throw new Error('Некорректный формат данных в файле');
+                }
+                
+                loader.style.display = 'none';
+                return serverData;
+                
+            } catch (error) {
+                loader.style.display = 'none';
+                debugInfo.innerHTML += `<span style="color: red;">Ошибка: ${error.message}</span><br>`;
+                console.error('Ошибка загрузки данных:', error);
+                return null;
+            }
+        }
+
+        // --- Инициализация данных по умолчанию ---
+        const defaultPagesData = {
+            "1": { "text": "Этаж 1", "imageSrc": "images/tech.jpg", "objects": [] },
+            "2": { "text": "Этаж 2", "imageSrc": "images/tech.jpg", "objects": [] },
+            "3": { "text": "Этаж 3", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "4": { "text": "Этаж 4", "imageSrc": "images/tech.jpg", "objects": [] },
+            "5": { "text": "Этаж 5", "imageSrc": "images/tech.jpg", "objects": [] },
+            "6": { "text": "Этаж 6", "imageSrc": "images/tech.jpg", "objects": [] },
+            "7": { "text": "Этаж 7", "imageSrc": "images/tech.jpg", "objects": [] },
+            "8": { "text": "Этаж 8", "imageSrc": "images/tech.jpg", "objects": [] },
+            "9": { "text": "Этаж 9", "imageSrc": "images/tech.jpg", "objects": [] }
+        };
+
+        // Глобальные переменные
+        let pagesData = null;
+        let currentPage = 1;
+        let addObjectMode = false;
+        let deleteObjectMode = false;
+
+        // --- Функция показа сообщения ---
+        function showMessage(text, type = 'info') {
+            editMessage.textContent = text;
+            editMessage.style.display = 'block';
+            editMessage.style.background = type === 'error' ? '#ffe6e6' : '#e7f3ff';
+            editMessage.style.borderColor = type === 'error' ? '#d70000' : '#0078d7';
+            setTimeout(() => {
+                editMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // --- Функция отрисовки объектов на фото ---
+        function renderObjects() {
+            const oldLabels = content.querySelectorAll('.object-label');
+            oldLabels.forEach(label => label.remove());
+
+            if (!pagesData || !pagesData[currentPage]) {
+                return;
+            }
+
+            const objects = pagesData[currentPage].objects || [];
+            
+            objects.forEach((obj, index) => {
+                const label = document.createElement('div');
+                label.className = 'object-label';
+                label.textContent = obj.name;
+                label.style.left = (obj.x * 100) + '%';
+                label.style.top = (obj.y * 100) + '%';
+                label.title = obj.name;
+                label.dataset.objectId = index;
+
+                if (isAdmin && deleteObjectMode) {
+                    label.classList.add('delete-mode');
+                    label.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const objectIndex = parseInt(this.dataset.objectId);
+                        if (confirm(`Удалить объект "${obj.name}"?`)) {
+                            pagesData[currentPage].objects.splice(objectIndex, 1);
+                            renderObjects();
+                            showMessage(`Объект "${obj.name}" удален`);
+                        }
+                    });
+                }
+                
+                imageContainer.appendChild(label);
+            });
+        }
+
+        // --- Функция сброса режимов редактирования ---
+        function resetEditModes() {
+            addObjectMode = false;
+            deleteObjectMode = false;
+            pageImage.classList.remove('add-object-cursor');
+            addObjectBtn.classList.remove('active');
+            deleteObjectBtn.classList.remove('active');
+            addObjectBtn.textContent = 'Добавить объект на фото';
+            deleteObjectBtn.textContent = 'Удалить объект';
+        }
+
+        // --- Загрузка страницы ---
+        function loadPage(page) {
+            if (!pagesData) {
+                pageText.textContent = 'Данные не загружены';
+                return;
+            }
+
+            currentPage = page.toString();
+            contentTitle.textContent = 'Карта третьего корпуса ИжГТУ';
+            
+            if (pagesData[page]) {
+                pageImage.src = pagesData[page].imageSrc;
+                pageText.textContent = pagesData[page].text;
+            } else {
+                pageText.textContent = 'Страница не найдена';
+            }
+
+            topRightLogo.style.display = 'block';
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-page') === page.toString()) {
+                    btn.classList.add('active');
+                }
+            });
+
+            editPanel.style.display = isAdmin ? 'block' : 'none';
+            resetEditModes();
+            renderObjects();
+        }
+
+        // --- Добавление объекта на фото (только для админа) ---
+        if (isAdmin) {
+            addObjectBtn.addEventListener('click', () => {
+                if (addObjectMode) {
+                    resetEditModes();
+                    showMessage('Режим добавления отменен');
+                } else {
+                    addObjectMode = true;
+                    deleteObjectMode = false;
+                    pageImage.classList.add('add-object-cursor');
+                    addObjectBtn.classList.add('active');
+                    deleteObjectBtn.classList.remove('active');
+                    addObjectBtn.textContent = 'Отменить добавление';
+                    deleteObjectBtn.textContent = 'Удалить объект';
+                    renderObjects();
+                    showMessage('Кликните по фото в нужном месте, чтобы добавить объект');
+                }
+            });
+
+            deleteObjectBtn.addEventListener('click', () => {
+                if (deleteObjectMode) {
+                    resetEditModes();
+                    showMessage('Режим удаления отменен');
+                } else {
+                    deleteObjectMode = true;
+                    addObjectMode = false;
+                    pageImage.classList.remove('add-object-cursor');
+                    deleteObjectBtn.classList.add('active');
+                    addObjectBtn.classList.remove('active');
+                    deleteObjectBtn.textContent = 'Отменить удаление';
+                    addObjectBtn.textContent = 'Добавить объект на фото';
+                    renderObjects();
+                    showMessage('Кликните по объекту, который хотите удалить');
+                }
+            });
+
+            saveFileBtn.addEventListener('click', saveDataToFile);
+
+            refreshDataBtn.addEventListener('click', async () => {
+                showMessage('Обновление данных...');
+                const newData = await loadDataFromServer();
+                if (newData) {
+                    pagesData = newData;
+                    loadPage(currentPage);
+                    showMessage('Данные успешно обновлены');
+                }
+            });
+
+            pageImage.addEventListener('click', function(e) {
+                if (!addObjectMode) return;
+
+                const rect = pageImage.getBoundingClientRect();
+                
+                if (e.clientX < rect.left || e.clientX > rect.right || 
+                    e.clientY < rect.top || e.clientY > rect.bottom) {
+                    return;
+                }
+
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+
+                const name = prompt('Введите название объекта:');
+                if (name && name.trim()) {
+                    const objectName = name.trim();
+                    
+                    if (!pagesData[currentPage].objects) {
+                        pagesData[currentPage].objects = [];
+                    }
+                    
+                    pagesData[currentPage].objects.push({ 
+                        name: objectName, 
+                        x: Math.max(0, Math.min(1, x)),
+                        y: Math.max(0, Math.min(1, y))
+                    });
+                    renderObjects();
+                    resetEditModes();
+                    showMessage(`Объект "${objectName}" добавлен`);
+                } else {
+                    showMessage('Название объекта не может быть пустым', 'error');
+                }
+            });
+        }
+
+        // --- Поиск по объектам ---
+        function searchObjects(query) {
+            const results = [];
+            if (!pagesData) return results;
+            
+            for (let page in pagesData) {
+                if (pagesData[page].objects) {
+                    pagesData[page].objects.forEach(obj => {
+                        if (obj.name.toLowerCase().includes(query.toLowerCase())) {
+                            results.push({
+                                page: page,
+                                name: obj.name,
+                                x: obj.x,
+                                y: obj.y
+                            });
+                        }
+                    });
+                }
+            }
+            return results;
+        }
+
+        // ... остальные функции (поиск, модальные окна, переключение страниц) остаются без изменений ...
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            searchResults.innerHTML = '';
+            if (!query) return;
+            
+            const found = searchObjects(query);
+            if (found.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'Ничего не найдено';
+                li.style.color = '#888';
+                searchResults.appendChild(li);
+            } else {
+                found.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>${item.name}</b> (Этаж ${item.page})`;
+                    li.style.cursor = 'pointer';
+                    li.onclick = () => {
+                        loadPage(Number(item.page));
+                        setTimeout(() => {
+                            const labels = content.querySelectorAll('.object-label');
+                            labels.forEach(label => {
+                                if (label.textContent === item.name) {
+                                    label.style.background = '#ffe066';
+                                    label.style.boxShadow = '0 0 10px rgba(255, 224, 102, 0.8)';
+                                    setTimeout(() => {
+                                        label.style.background = '';
+                                        label.style.boxShadow = '';
+                                    }, 2000);
+                                }
+                            });
+                        }, 200);
+                        searchModal.classList.remove('active');
+                    };
+                    searchResults.appendChild(li);
+                });
+            }
+        });
+
+        searchIcon.addEventListener('click', () => {
+            searchModal.classList.add('active');
+            searchInput.value = '';
+            searchResults.innerHTML = '';
+            setTimeout(() => searchInput.focus(), 100);
+        });
+
+        closeModal.addEventListener('click', () => {
+            searchModal.classList.remove('active');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === searchModal) {
+                searchModal.classList.remove('active');
+            }
+        });
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                searchModal.classList.remove('active');
+                resetEditModes();
+            }
+        });
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const page = button.getAttribute('data-page');
+                loadPage(page);
+            });
+        });
+
+        // --- Инициализация при загрузке ---
+        async function initialize() {
+            const serverData = await loadDataFromServer();
+            
+            if (serverData) {
+                pagesData = serverData;
+                showMessage('Данные успешно загружены из data.json');
+                debugInfo.innerHTML += '<span style="color: green;">✓ Данные загружены успешно</span>';
+            } else {
+                pagesData = JSON.parse(JSON.stringify(defaultPagesData));
+                showMessage('Файл data.json не найден. Используются данные по умолчанию.', 'info');
+                debugInfo.innerHTML += '<span style="color: orange;">⚠ Используются данные по умолчанию</span>';
+            }
+            
+            loadPage(1);
+        }
+
+        // --- Запуск приложения ---
+        initialize();
+
+        function resetAllData() {
+            if (confirm('Вы уверены, что хотите сбросить все данные к значениям по умолчанию?')) {
+                pagesData = JSON.parse(JSON.stringify(defaultPagesData));
+                loadPage(currentPage);
+                showMessage('Все данные сброшены к значениям по умолчанию');
+            }
+        }
+
+        console.log('Для сброса всех данных выполните: resetAllData()');
+    </script>
+</body>
+</html>

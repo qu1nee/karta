@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Навигатор ИжГТУ</title>
+    <style>
+        :root {
+            --primary-color: #0078d7;
+            --danger-color: #d70000;
+            --success-color: #28a745;
+            --sidebar-width: 60px;
+            --corpus-sidebar-width: 80px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: white;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        
+        /* Левая панель для корпусов */
+        .corpus-sidebar {
+            width: var(--corpus-sidebar-width);
+            background-color: #f8f9fa;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .corpus-sidebar button {
+            margin: 6px 0;
+            width: 50px;
+            height: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid #ccc;
+            background-color: white;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .corpus-sidebar button:hover {
+            background-color: #e9ecef;
+            border-color: #0078d7;
+        }
+        
+        .corpus-sidebar button.active {
+            background-color: #0078d7;
+            color: white;
+            border-color: #005a9e;
+            transform: scale(1.05);
+        }
+        
+        .corpus-sidebar .corpus-label {
+            font-size: 10px;
+            margin-top: 4px;
+            color: #666;
+        }
+        
+        /* Иконка поиска */
+        .search-icon {
+            position: fixed;
+            top: 20px;
+            left: calc(var(--corpus-sidebar-width) + 20px);
+            width: 90px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 2000;
+            background-color: var(--primary-color);
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .search-icon:hover {
+            background-color: #005a9e;
+            transform: translateY(-2px);
+        }
+        
+        .search-icon span {
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        /* Правая панель для этажей */
+        .floor-sidebar {
+            width: var(--sidebar-width);
+            background-color: #f0f0f0;
+            border-left: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .floor-sidebar button {
+            margin: 5px 0;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #999;
+            background-color: white;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .floor-sidebar button:hover, .floor-sidebar button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: #005a9e;
+        }
+        
+        /* Основной контент */
+        .content {
+            flex-grow: 1;
+            padding: 80px 20px 20px 20px;
+            margin-left: var(--corpus-sidebar-width);
+            margin-right: var(--sidebar-width);
+            position: relative;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            width: calc(100% - var(--corpus-sidebar-width) - var(--sidebar-width));
+        }
+        
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            width: 100%;
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .corpus-info {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        #top-right-logo {
+            position: absolute;
+            top: 10px;
+            right: calc(var(--sidebar-width) + 10px);
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            display: block;
+            z-index: 10;
+        }
+        
+        .content #page-image {
+            margin-bottom: 40px;
+            max-width: 90%;
+        }
+        
+        .image-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            max-width: 900px;
+        }
+        
+        .object-label {
+            position: absolute;
+            background: rgba(255,255,255,0.95);
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 14px;
+            color: var(--primary-color);
+            pointer-events: none;
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            z-index: 100;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            font-weight: 500;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .object-label.delete-mode {
+            cursor: pointer;
+            background: #ffcccc;
+            border-color: var(--danger-color);
+            pointer-events: auto;
+        }
+        
+        #page-image.add-object-cursor {
+            cursor: crosshair;
+        }
+        
+        .edit-panel {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .edit-buttons-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .add-object-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .add-object-btn:hover {
+            background: #005a9e;
+            transform: translateY(-2px);
+        }
+        
+        .add-object-btn.active {
+            background: #005a9e;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .delete-object-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: var(--danger-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-object-btn:hover {
+            background: #a00000;
+            transform: translateY(-2px);
+        }
+        
+        .delete-object-btn.active {
+            background: #a00000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .message {
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 6px;
+            background: #e7f3ff;
+            border: 1px solid var(--primary-color);
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .save-file-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background: var(--success-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .save-file-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        #page-text {
+            text-align: center;
+            width: 100%;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #2c3e50;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 40px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: left;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            left: 0; top: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            min-width: 300px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            position: relative;
+            text-align: left;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 28px;
+            color: #888;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .search-results {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .search-results li {
+            margin-bottom: 10px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .search-results li:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* Адаптация для телефона */
+        @media (max-width: 768px) {
+            :root {
+                --sidebar-width: 50px;
+                --corpus-sidebar-width: 60px;
+            }
+            
+            body {
+                flex-direction: column;
+            }
+            
+            .corpus-sidebar {
+                width: 100%;
+                height: 70px;
+                flex-direction: row;
+                justify-content: center;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                padding: 5px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                overflow-x: auto;
+            }
+            
+            .corpus-sidebar button {
+                margin: 0 5px;
+                width: 45px;
+                height: 45px;
+                font-size: 14px;
+            }
+            
+            .corpus-sidebar .corpus-label {
+                display: none;
+            }
+            
+            .floor-sidebar {
+                width: 100%;
+                height: 50px;
+                flex-direction: row;
+                justify-content: center;
+                border-left: none;
+                border-top: 1px solid #ccc;
+                padding: 5px;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+            }
+            
+            .floor-sidebar button {
+                margin: 0 3px;
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .content {
+                margin: 70px 0 50px 0;
+                padding: 80px 10px 20px 10px;
+                width: 100%;
+            }
+            
+            .search-icon {
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 80px;
+                height: 35px;
+            }
+            
+            #top-right-logo {
+                position: fixed;
+                top: 75px;
+                right: 10px;
+                width: 60px;
+                height: 60px;
+                z-index: 1000;
+            }
+            
+            h1 {
+                font-size: 22px;
+                margin-top: 20px;
+            }
+            
+            .corpus-info {
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+            
+            .content #page-image {
+                margin-bottom: 20px;
+                max-width: 100%;
+            }
+            
+            .object-label {
+                font-size: 12px;
+                padding: 4px 8px;
+                max-width: 150px;
+            }
+            
+            .edit-buttons-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .add-object-btn,
+            .delete-object-btn,
+            .save-file-btn {
+                width: 100%;
+                max-width: 280px;
+                margin: 5px 0;
+            }
+            
+            #page-text {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+                margin-top: 40px;
+            }
+            
+            .content {
+                padding: 90px 5px 20px 5px;
+            }
+            
+            .search-icon {
+                width: 70px;
+                height: 30px;
+            }
+            
+            .search-icon span {
+                font-size: 12px;
+            }
+            
+            .modal-content {
+                padding: 20px 15px;
+                width: 95vw;
+            }
+            
+            .object-label {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+        }
+        
+        /* Для очень маленьких экранов */
+        @media (max-width: 360px) {
+            .corpus-sidebar button {
+                width: 40px;
+                height: 40px;
+                margin: 0 3px;
+                font-size: 12px;
+            }
+            
+            .floor-sidebar button {
+                width: 30px;
+                height: 30px;
+                margin: 0 2px;
+                font-size: 12px;
+            }
+            
+            h1 {
+                font-size: 18px;
+            }
+            
+            #page-text {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Левая панель для корпусов -->
+    <div class="corpus-sidebar" id="corpusSidebar">
+        <button data-corpus="1" class="corpus-btn" title="Корпус 1">
+            1
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="2" class="corpus-btn" title="Корпус 2">
+            2
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="3" class="corpus-btn active" title="Корпус 3">
+            3
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="4" class="corpus-btn" title="Корпус 4">
+            4
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="5" class="corpus-btn" title="Корпус 5">
+            5
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="6" class="corpus-btn" title="Корпус 6">
+            6
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="7" class="corpus-btn" title="Корпус 7">
+            7
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="8" class="corpus-btn" title="Корпус 8">
+            8
+            <div class="corpus-label">Корп.</div>
+        </button>
+        <button data-corpus="9" class="corpus-btn" title="Корпус 9">
+            9
+            <div class="corpus-label">Корп.</div>
+        </button>
+    </div>
+
+    <!-- Иконка поиска -->
+    <div class="search-icon" id="searchIcon" title="Поиск по объектам">
+        <span>Поиск</span>
+    </div>
+
+    <!-- Модальное окно поиска -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <span class="modal-close" id="closeModal">&times;</span>
+            <h2>Поиск по объектам</h2>
+            <input type="text" id="searchInput" placeholder="Введите название объекта..." 
+                   style="width:100%;padding:12px;font-size:16px;border:2px solid #ddd;border-radius:6px;margin-top:10px;">
+            <ul class="search-results" id="searchResults"></ul>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="content" id="content">
+        <h1 id="page-title">Карта третьего корпуса ИжГТУ</h1>
+        <div class="corpus-info" id="corpusInfo"></div>
+        
+        <div id="loader" class="loader" style="display: none;"></div>
+        
+        <div class="image-container" id="imageContainer">
+            <img src="images/tech.jpg" alt="План этажа" id="page-image" />
+        </div>
+        
+        <img src="images/logo.jpg" alt="Логотип ИжГТУ" id="top-right-logo" />
+        
+        <p id="page-text">Загрузка...</p>
+
+        <!-- Отладочная информация -->
+        <div class="debug-info" id="debugInfo" style="display: none;"></div>
+
+        <!-- Панель редактирования только для админа -->
+        <div class="edit-panel" id="editPanel" style="display:none;">
+            <div class="message" id="editMessage" style="display:none;"></div>
+            <div class="edit-buttons-container">
+                <button class="add-object-btn" id="addObjectBtn">Добавить объект на фото</button>
+                <button class="delete-object-btn" id="deleteObjectBtn">Удалить объект</button>
+                <button class="save-file-btn" id="saveFileBtn">Сохранить в data.json</button>
+                <button class="save-file-btn" id="refreshDataBtn" style="background: #6c757d;">Обновить данные</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Правая панель для этажей -->
+    <div class="floor-sidebar" id="floorSidebar">
+        <button class="active" data-floor="1">1</button>
+        <button data-floor="2">2</button>
+        <button data-floor="3">3</button>
+        <button data-floor="4">4</button>
+        <button data-floor="5">5</button>
+        <button data-floor="6">6</button>
+        <button data-floor="7">7</button>
+        <button data-floor="8">8</button>
+        <button data-floor="9">9</button>
+    </div>
+
+    <script>
+        // --- Настройка режима администратора ---
+        const isAdmin = true;
+
+        // --- DOM элементы ---
+        const content = document.getElementById('content');
+        const pageTitle = document.getElementById('page-title');
+        const corpusInfo = document.getElementById('corpusInfo');
+        const pageImage = document.getElementById('page-image');
+        const pageText = document.getElementById('page-text');
+        const topRightLogo = document.getElementById('top-right-logo');
+        const corpusButtons = document.querySelectorAll('.corpus-btn');
+        const floorButtons = document.querySelectorAll('.floor-sidebar button');
+        const editPanel = document.getElementById('editPanel');
+        const addObjectBtn = document.getElementById('addObjectBtn');
+        const deleteObjectBtn = document.getElementById('deleteObjectBtn');
+        const saveFileBtn = document.getElementById('saveFileBtn');
+        const refreshDataBtn = document.getElementById('refreshDataBtn');
+        const searchIcon = document.getElementById('searchIcon');
+        const searchModal = document.getElementById('searchModal');
+        const closeModal = document.getElementById('closeModal');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const imageContainer = document.getElementById('imageContainer');
+        const editMessage = document.getElementById('editMessage');
+        const loader = document.getElementById('loader');
+        const debugInfo = document.getElementById('debugInfo');
+
+        // --- Константы ---
+        const DATA_FILE = './data.json';
+
+        // --- Структура данных корпусов ---
+        const corpusInfoData = {
+            "1": { name: "Корпус 1", description: "" },
+            "2": { name: "Корпус 2", description: "" },
+            "3": { name: "Корпус 3", description: "" },
+            "4": { name: "Корпус 4", description: "" },
+            "5": { name: "Корпус 5", description: "" },
+            "6": { name: "Корпус 6", description: "" },
+            "7": { name: "Корпус 7", description: "" },
+            "8": { name: "Корпус 8", description: "" },
+            "9": { name: "Корпус 9", description: "" }
+        };
+
+        // --- Инициализация данных по умолчанию ---
+        const defaultPagesData = {
+            "1": { "text": "Этаж 1", "imageSrc": "images/tech.jpg", "objects": [] },
+            "2": { "text": "Этаж 2", "imageSrc": "images/tech.jpg", "objects": [] },
+            "3": { "text": "Этаж 3", "imageSrc": "images/oneNOtext.jpg", "objects": [] },
+            "4": { "text": "Этаж 4", "imageSrc": "images/tech.jpg", "objects": [] },
+            "5": { "text": "Этаж 5", "imageSrc": "images/tech.jpg", "objects": [] },
+            "6": { "text": "Этаж 6", "imageSrc": "images/tech.jpg", "objects": [] },
+            "7": { "text": "Этаж 7", "imageSrc": "images/tech.jpg", "objects": [] },
+            "8": { "text": "Этаж 8", "imageSrc": "images/tech.jpg", "objects": [] },
+            "9": { "text": "Этаж 9", "imageSrc": "images/tech.jpg", "objects": [] }
+        };
+
+        // Глобальные переменные
+        let pagesData = null;
+        let currentCorpus = 3; // По умолчанию 3 корпус
+        let currentFloor = 1;
+        let addObjectMode = false;
+        let deleteObjectMode = false;
+
+        // --- Функция показа сообщения ---
+        function showMessage(text, type = 'info') {
+            editMessage.textContent = text;
+            editMessage.style.display = 'block';
+            editMessage.style.background = type === 'error' ? '#ffe6e6' : '#e7f3ff';
+            editMessage.style.borderColor = type === 'error' ? '#d70000' : '#0078d7';
+            setTimeout(() => {
+                editMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // --- Функция отрисовки объектов на фото ---
+        function renderObjects() {
+            const oldLabels = content.querySelectorAll('.object-label');
+            oldLabels.forEach(label => label.remove());
+
+            // Для корпусов кроме 3-го всегда пустые объекты
+            if (currentCorpus !== 3) {
+                return;
+            }
+
+            if (!pagesData || !pagesData[currentFloor]) {
+                return;
+            }
+
+            const objects = pagesData[currentFloor].objects || [];
+            
+            objects.forEach((obj, index) => {
+                const label = document.createElement('div');
+                label.className = 'object-label';
+                label.textContent = obj.name;
+                label.style.left = (obj.x * 100) + '%';
+                label.style.top = (obj.y * 100) + '%';
+                label.title = obj.name + ' (клик для удаления)';
+                label.dataset.objectId = index;
+
+                if (isAdmin && deleteObjectMode && currentCorpus === 3) {
+                    label.classList.add('delete-mode');
+                    label.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const objectIndex = parseInt(this.dataset.objectId);
+                        if (confirm(`Удалить объект "${obj.name}"?`)) {
+                            pagesData[currentFloor].objects.splice(objectIndex, 1);
+                            renderObjects();
+                            showMessage(`Объект "${obj.name}" удален`);
+                        }
+                    });
+                }
+                
+                imageContainer.appendChild(label);
+            });
+        }
+
+        // --- Функция сброса режимов редактирования ---
+        function resetEditModes() {
+            addObjectMode = false;
+            deleteObjectMode = false;
+            pageImage.classList.remove('add-object-cursor');
+            addObjectBtn.classList.remove('active');
+            deleteObjectBtn.classList.remove('active');
+            addObjectBtn.textContent = 'Добавить объект на фото';
+            deleteObjectBtn.textContent = 'Удалить объект';
+        }
+
+        // --- Загрузка страницы ---
+        function loadPage(corpus, floor) {
+            if (!pagesData) {
+                pageText.textContent = 'Данные не загружены';
+                return;
+            }
+
+            currentCorpus = corpus;
+            currentFloor = floor;
+            
+            const corpusInfo = corpusInfoData[corpus];
+            pageTitle.textContent = `Карта ${corpusInfo.name} ИжГТУ`;
+            document.getElementById('corpusInfo').textContent = corpusInfo.description;
+            
+            // Для 3 корпуса используем данные из pagesData
+            // Для остальных корпусов - данные по умолчанию
+            if (corpus === 3 && pagesData[floor]) {
+                pageImage.src = pagesData[floor].imageSrc;
+                pageText.textContent = pagesData[floor].text;
+            } else {
+                pageText.textContent = `Этаж ${floor}`;
+                // Для других корпусов показываем сообщение
+                if (corpus !== 3) {
+                    showMessage('Данные доступны только для 3 корпуса. Для просмотра других корпусов добавьте изображения в папку images.', 'info');
+                }
+                pageImage.src = 'images/tech.jpg';
+            }
+
+            // Обновление активных кнопок
+            corpusButtons.forEach(btn => btn.classList.remove('active'));
+            corpusButtons.forEach(btn => {
+                if (parseInt(btn.dataset.corpus) === corpus) {
+                    btn.classList.add('active');
+                }
+            });
+
+            floorButtons.forEach(btn => btn.classList.remove('active'));
+            floorButtons.forEach(btn => {
+                if (parseInt(btn.dataset.floor) === floor) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Показываем/скрываем панель редактирования только для 3 корпуса
+            editPanel.style.display = (isAdmin && corpus === 3) ? 'block' : 'none';
+            
+            resetEditModes();
+            renderObjects();
+        }
+
+        // --- Функция загрузки данных с сервера ---
+        async function loadDataFromServer() {
+            try {
+                loader.style.display = 'block';
+                pageText.textContent = 'Загрузка данных...';
+                debugInfo.style.display = 'block';
+                
+                const url = DATA_FILE + '?t=' + Date.now();
+                debugInfo.innerHTML = `Загрузка данных: ${url}<br>`;
+                
+                const response = await fetch(url);
+                
+                debugInfo.innerHTML += `Статус ответа: ${response.status}<br>`;
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                debugInfo.innerHTML += `Получено: ${text.length} символов<br>`;
+                
+                if (!text.trim()) {
+                    throw new Error('Файл пустой');
+                }
+                
+                const serverData = JSON.parse(text);
+                debugInfo.innerHTML += `Данные успешно загружены<br>`;
+                
+                // Валидация данных
+                if (typeof serverData !== 'object' || serverData === null) {
+                    throw new Error('Некорректный формат данных');
+                }
+                
+                // Проверяем структуру данных
+                debugInfo.innerHTML += `Структура данных:<br>`;
+                for (let key in serverData) {
+                    if (serverData.hasOwnProperty(key)) {
+                        debugInfo.innerHTML += `Этаж ${key}: ${serverData[key].objects ? serverData[key].objects.length : 0} объектов<br>`;
+                    }
+                }
+                
+                loader.style.display = 'none';
+                return serverData;
+                
+            } catch (error) {
+                loader.style.display = 'none';
+                debugInfo.innerHTML += `<span style="color: red;">Ошибка: ${error.message}</span><br>`;
+                console.error('Ошибка загрузки данных:', error);
+                return null;
+            }
+        }
+
+        // --- Сохранение данных в файл ---
+        function saveDataToFile() {
+            const dataStr = JSON.stringify(pagesData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('Файл data.json скачан. Загрузите его в корневую папку репозитория.');
+        }
+
+        // --- Поиск по объектам ---
+        function searchObjects(query) {
+            const results = [];
+            if (!pagesData) return results;
+            
+            // Ищем только в 3 корпусе
+            for (let floor in pagesData) {
+                if (pagesData[floor].objects) {
+                    pagesData[floor].objects.forEach(obj => {
+                        if (obj.name.toLowerCase().includes(query.toLowerCase())) {
+                            results.push({
+                                corpus: 3, // Всегда 3 корпус
+                                floor: floor,
+                                name: obj.name,
+                                x: obj.x,
+                                y: obj.y
+                            });
+                        }
+                    });
+                }
+            }
+            return results;
+        }
+
+        // --- Обработчики событий для корпусов ---
+        corpusButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const corpus = parseInt(button.dataset.corpus);
+                loadPage(corpus, 1); // При переключении корпуса показываем 1 этаж
+            });
+        });
+
+        // --- Обработчики событий для этажей ---
+        floorButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const floor = parseInt(button.dataset.floor);
+                loadPage(currentCorpus, floor);
+            });
+        });
+
+        // --- Режим администратора ---
+        if (isAdmin) {
+            addObjectBtn.addEventListener('click', () => {
+                if (addObjectMode) {
+                    resetEditModes();
+                    showMessage('Режим добавления отменен');
+                } else {
+                    addObjectMode = true;
+                    deleteObjectMode = false;
+                    pageImage.classList.add('add-object-cursor');
+                    addObjectBtn.classList.add('active');
+                    deleteObjectBtn.classList.remove('active');
+                    addObjectBtn.textContent = 'Отменить добавление';
+                    deleteObjectBtn.textContent = 'Удалить объект';
+                    renderObjects();
+                    showMessage('Кликните по фото в нужном месте, чтобы добавить объект');
+                }
+            });
+
+            deleteObjectBtn.addEventListener('click', () => {
+                if (deleteObjectMode) {
+                    resetEditModes();
+                    showMessage('Режим удаления отменен');
+                } else {
+                    deleteObjectMode = true;
+                    addObjectMode = false;
+                    pageImage.classList.remove('add-object-cursor');
+                    deleteObjectBtn.classList.add('active');
+                    addObjectBtn.classList.remove('active');
+                    deleteObjectBtn.textContent = 'Отменить удаление';
+                    addObjectBtn.textContent = 'Добавить объект на фото';
+                    renderObjects();
+                    showMessage('Кликните по объекту, который хотите удалить');
+                }
+            });
+
+            saveFileBtn.addEventListener('click', saveDataToFile);
+
+            refreshDataBtn.addEventListener('click', async () => {
+                showMessage('Обновление данных...');
+                const newData = await loadDataFromServer();
+                if (newData) {
+                    pagesData = newData;
+                    loadPage(currentCorpus, currentFloor);
+                    showMessage('Данные успешно обновлены');
+                }
+            });
+
+            pageImage.addEventListener('click', function(e) {
+                if (!addObjectMode || currentCorpus !== 3) return;
+
+                const rect = pageImage.getBoundingClientRect();
+                
+                if (e.clientX < rect.left || e.clientX > rect.right || 
+                    e.clientY < rect.top || e.clientY > rect.bottom) {
+                    return;
+                }
+
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = (e.clientY - rect.top) / rect.height;
+
+                const name = prompt('Введите название объекта:');
+                if (name && name.trim()) {
+                    const objectName = name.trim();
+                    
+                    if (!pagesData[currentFloor]) {
+                        pagesData[currentFloor] = { text: `Этаж ${currentFloor}`, imageSrc: "images/tech.jpg", objects: [] };
+                    }
+                    if (!pagesData[currentFloor].objects) {
+                        pagesData[currentFloor].objects = [];
+                    }
+                    
+                    pagesData[currentFloor].objects.push({ 
+                        name: objectName, 
+                        x: Math.max(0, Math.min(1, x)),
+                        y: Math.max(0, Math.min(1, y))
+                    });
+                    renderObjects();
+                    resetEditModes();
+                    showMessage(`Объект "${objectName}" добавлен`);
+                } else {
+                    showMessage('Название объекта не может быть пустым', 'error');
+                }
+            });
+        }
+
+        // --- Поиск ---
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            searchResults.innerHTML = '';
+            if (!query) return;
+            
+            const found = searchObjects(query);
+            if (found.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'Ничего не найдено';
+                li.style.color = '#888';
+                li.style.padding = '15px';
+                li.style.textAlign = 'center';
+                searchResults.appendChild(li);
+            } else {
+                found.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${item.name}</strong><br>
+                                   <small>Корпус ${item.corpus}, Этаж ${item.floor}</small>`;
+                    li.style.cursor = 'pointer';
+                    li.style.padding = '12px';
+                    li.style.borderRadius = '6px';
+                    li.onclick = () => {
+                        loadPage(parseInt(item.corpus), parseInt(item.floor));
+                        setTimeout(() => {
+                            const labels = content.querySelectorAll('.object-label');
+                            labels.forEach(label => {
+                                if (label.textContent === item.name) {
+                                    label.style.background = '#ffe066';
+                                    label.style.boxShadow = '0 0 10px rgba(255, 224, 102, 0.8)';
+                                    label.style.zIndex = '200';
+                                    setTimeout(() => {
+                                        label.style.background = '';
+                                        label.style.boxShadow = '';
+                                        label.style.zIndex = '100';
+                                    }, 3000);
+                                }
+                            });
+                        }, 300);
+                        searchModal.classList.remove('active');
+                    };
+                    searchResults.appendChild(li);
+                });
+            }
+        });
+
+        searchIcon.addEventListener('click', () => {
+            searchModal.classList.add('active');
+            searchInput.value = '';
+            searchResults.innerHTML = '';
+            setTimeout(() => searchInput.focus(), 100);
+        });
+
+        closeModal.addEventListener('click', () => {
+            searchModal.classList.remove('active');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === searchModal) {
+                searchModal.classList.remove('active');
+            }
+        });
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                searchModal.classList.remove('active');
+                resetEditModes();
+            }
+        });
+
+        // --- Инициализация при загрузке ---
+        async function initialize() {
+            const serverData = await loadDataFromServer();
+            
+            if (serverData) {
+                pagesData = serverData;
+                showMessage('Данные успешно загружены из data.json');
+                debugInfo.innerHTML += '<span style="color: green;">✓ Данные загружены успешно</span>';
+                // Показываем сколько объектов загружено
+                let totalObjects = 0;
+                for (let floor in pagesData) {
+                    if (pagesData[floor].objects) {
+                        totalObjects += pagesData[floor].objects.length;
+                    }
+                }
+                debugInfo.innerHTML += `<br>Всего объектов: ${totalObjects}`;
+            } else {
+                pagesData = JSON.parse(JSON.stringify(defaultPagesData));
+                showMessage('Файл data.json не найден. Используются данные по умолчанию.', 'info');
+                debugInfo.innerHTML += '<span style="color: orange;">⚠ Используются данные по умолчанию</span>';
+            }
+            
+            loadPage(3, 1);
+        }
+
+        // --- Запуск приложения ---
+        initialize();
+
+        // --- Функция сброса данных (для консоли) ---
+        function resetAllData() {
+            if (confirm('Вы уверены, что хотите сбросить все данные к значениям по умолчанию?')) {
+                pagesData = JSON.parse(JSON.stringify(defaultPagesData));
+                loadPage(currentCorpus, currentFloor);
+                showMessage('Все данные сброшены к значениям по умолчанию');
+            }
+        }
+
+        console.log('Для сброса всех данных выполните: resetAllData()');
+        console.log('Текущий корпус:', currentCorpus, 'Текущий этаж:', currentFloor);
+    </script>
+</body>
+</html>

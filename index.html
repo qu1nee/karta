@@ -1781,7 +1781,8 @@
                         setTimeout(() => {
                             highlightObject(item.name);
                         }, 300);
-                        // Не закрываем модальное окно при активном поиске
+                        // ЗАКРЫВАЕМ модальное окно после выбора результата поиска
+                        searchModal.classList.remove('active');
                     };
                     searchResults.appendChild(li);
                 });
@@ -2049,14 +2050,31 @@
             performSearch(this.value);
         });
 
+        // Добавляем обработчик клавиши Enter для выбора первого результата
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const firstResult = searchResults.querySelector('li');
+                if (firstResult) {
+                    firstResult.click();
+                }
+            }
+        });
+
         clearSearchBtn.addEventListener('click', function() {
             searchInput.value = '';
             performSearch('');
+            // Закрываем модальное окно при очистке поиска
+            searchModal.classList.remove('active');
         });
 
         searchIcon.addEventListener('click', () => {
             searchModal.classList.add('active');
             searchInput.focus();
+            // Если есть активный поиск, показываем результаты
+            if (activeSearch) {
+                const results = searchObjects(searchQuery);
+                updateSearchResults(results);
+            }
         });
 
         // --- Быстрый доступ ---
@@ -2272,4 +2290,3 @@
     </script>
 </body>
 </html>
-
